@@ -1,4 +1,5 @@
 ﻿// Copyright (c) 2018, Gustave M. - gus33000.me - @gus33000
+// Copyright (c) 2017, Rene Lergner - wpinternals.net - @Heathcliff74xda
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
