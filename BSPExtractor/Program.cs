@@ -170,7 +170,8 @@ namespace BSPExtractor
                     proc.Start();
                     proc.WaitForExit();
 
-                    Stream stream = File.OpenRead(packagename.Replace(".xml", "")); //File.OpenRead(path);//
+                    Stream stream = File.OpenRead(packagename.Replace(".xml", ""));
+                    //Stream stream = File.OpenRead(path);//
 
                     XmlSerializer serializer = new XmlSerializer(typeof(XmlDsm.Package));
                     XmlDsm.Package package = (XmlDsm.Package)serializer.Deserialize(stream);
@@ -247,10 +248,19 @@ namespace BSPExtractor
                 Console.WriteLine("(bspExtractor) " + "Reading files...");
                 if (Directory.Exists(Output + @"\Registry\spkg\out"))
                 {
-                    foreach (var file in Directory.EnumerateFiles(Output + @"\Registry\spkg\"))
+                    foreach (var file in Directory.EnumerateFiles(Output + @"\Registry\spkg\out"))
                     {
+                        //var ownerSecurity = new FileSecurity();
+                        //ownerSecurity.SetOwner(new SecurityIdentifier(WellKnownSidType.WorldSid, null));
+                        //File.SetAccessControl(file, ownerSecurity);
+
+                        var accessSecurity = new FileSecurity();
+                        accessSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, AccessControlType.Allow));
+                        File.SetAccessControl(file, accessSecurity);
+
                         //var file = string.Join("\\", file2.Split('\\').Reverse().Skip(1).Reverse()) + @"\out\" + string.Join("\\", file2.Split('\\').Last());
                         var content = KeyNameReplace(File.ReadAllText(file));
+                        File.Delete(file);
                         File.WriteAllText(file, content);
 
                         if (content.Contains("; RegistrySource="))
@@ -272,10 +282,10 @@ namespace BSPExtractor
                         }
                         else
                         {
-                            if (!File.Exists(Output + @"\Registry\" + file.Split('\\').Last().Replace("_1", "") + ".reg"))
-                                File.Move(file, Output + @"\Registry\" + file.Split('\\').Last().Replace("_1", "") + ".reg");
+                            if (!File.Exists(Output + @"\Registry\" + file.Split('\\').Last().Replace("_1", "").Replace(".rga", "").Replace(".reg", "") + ".reg"))
+                                File.Move(file, Output + @"\Registry\" + file.Split('\\').Last().Replace("_1", "").Replace(".rga", "").Replace(".reg", "") + ".reg");
                             else
-                                File.AppendAllText(Output + @"\Registry\" + file.Split('\\').Last().Replace("_1", "") + ".reg", File.ReadAllText(file).Replace("Windows Registry Editor Version 5.00", "; RegistrySource=" + file.Split('\\').Last().Replace("_1", "") + ".reg"), Encoding.ASCII);
+                                File.AppendAllText(Output + @"\Registry\" + file.Split('\\').Last().Replace("_1", "").Replace(".rga", "").Replace(".reg", "") + ".reg", File.ReadAllText(file).Replace("Windows Registry Editor Version 5.00", "; RegistrySource=" + file.Split('\\').Last().Replace("_1", "").Replace(".rga", "").Replace(".reg", "") + ".reg"), Encoding.ASCII);
                         }
                     }
                     Console.WriteLine("(bspExtractor) " + "Cleaning up...");
@@ -429,7 +439,8 @@ namespace BSPExtractor
                     proc.Start();
                     proc.WaitForExit();
 
-                    Stream stream = File.OpenRead(packagename.Replace(".xml", "")); //File.OpenRead(path);//
+                    Stream stream = File.OpenRead(packagename.Replace(".xml", ""));
+                    //Stream stream = File.OpenRead(path);//
 
                     XmlSerializer serializer = new XmlSerializer(typeof(XmlDsm.Package));
                     XmlDsm.Package package = (XmlDsm.Package)serializer.Deserialize(stream);
@@ -504,7 +515,8 @@ namespace BSPExtractor
                     string temppath = Path.Combine(destDirName, file.Name);
 
                     // Copy the file.
-                    file.CopyTo(temppath, false);
+                    File.Copy(file.FullName, temppath, false);
+                    //file.CopyTo(temppath, false);
                 }
 
                 // If copySubDirs is true, copy the subdirectories.
