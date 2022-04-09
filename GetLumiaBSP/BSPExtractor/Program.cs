@@ -222,7 +222,7 @@ namespace BSPExtractor
                 Console.WriteLine("(bspExtractor) " + "Processing registry files...");
                 foreach (string? file in Directory.EnumerateFiles(Output + @"\Registry\cbs\"))
                 {
-                    RunProgram("SxSExpand.exe", file + " " + Output + @"\Registry\cbs\out");
+                    File.WriteAllText(Output + @"\Registry\cbs\out\" + Path.GetFileName(file), LibSxS.Delta.DeltaAPI.GetManifest(file));
                     File.Delete(file);
                 }
 

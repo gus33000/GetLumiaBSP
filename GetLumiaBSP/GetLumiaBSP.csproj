@@ -23,7 +23,6 @@
     <None Remove="Care\WLANCare\qcwlan8626.inf" />
     <None Remove="Care\WLANCare\qcwlan8974.inf" />
     <None Remove="manifest.bin" />
-    <None Remove="SxSExpand.EXE" />
   </ItemGroup>
 
   <ItemGroup>
@@ -67,9 +66,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="manifest.bin">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="SxSExpand.EXE">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
