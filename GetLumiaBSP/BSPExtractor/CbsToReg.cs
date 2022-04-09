@@ -26,9 +26,9 @@ namespace BSPExtractor
     public class CbsToReg
     {
         private readonly List<RegistryCollection> _registries;
-        private string _comment;
-        public string Comment { get => _comment; set => _comment = value; }
+        public string Comment { get; set; }
 
+        //ctor
         public CbsToReg()
         {
             _registries = new List<RegistryCollection>();
@@ -39,10 +39,9 @@ namespace BSPExtractor
             _registries.Add(reg);
         }
 
-        private string KeyNameReplace(string s, string software, string system)
+        private static string KeyNameReplace(string s, string software, string system)
         {
-            return s.Replace("HKEY_LOCAL_MACHINE\\SOFTWARE", "HKEY_LOCAL_MACHINE\\" + software.ToUpper())
-.Replace("HKEY_LOCAL_MACHINE\\SYSTEM", "HKEY_LOCAL_MACHINE\\" + system.ToUpper());
+            return s.Replace("HKEY_LOCAL_MACHINE\\SOFTWARE", "HKEY_LOCAL_MACHINE\\" + software, StringComparison.InvariantCultureIgnoreCase).Replace("HKEY_LOCAL_MACHINE\\SYSTEM", "HKEY_LOCAL_MACHINE\\" + system, StringComparison.InvariantCultureIgnoreCase);
         }
 
         public string Build(string softwareName, string systemName)
@@ -53,7 +52,7 @@ namespace BSPExtractor
 
             foreach (RegistryCollection registry in _registries)
             {
-                str.Append("[" + KeyNameReplace(registry.KeyName.ToUpper(), softwareName, systemName) + "]" + "\r\n");
+                str.Append("[" + KeyNameReplace(registry.KeyName, softwareName, systemName) + "]" + "\r\n");
 
                 foreach (RegistryValue registryValue in registry.RegistryValues)
                 {
@@ -66,7 +65,7 @@ namespace BSPExtractor
             return str.ToString();
         }
 
-        private void FinalizeSlice(string output, string reg, string type)
+        private static void FinalizeSlice(string output, string reg, string type)
         {
             File.WriteAllText(output + type + ".reg", reg, Encoding.Unicode);
         }
