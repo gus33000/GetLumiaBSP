@@ -106,6 +106,21 @@ namespace BSPExtractor
             return lst.ToArray();
         }
 
+        private static void RunProgram(string ProgramPath, string ProgramArguments)
+        {
+            Process? proc = new()
+            {
+                StartInfo = new ProcessStartInfo(ProgramPath, ProgramArguments)
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                }
+            };
+            proc.Start();
+            proc.WaitForExit();
+        }
+
         private static void HandleReg(string NewDrive, string Output)
         {
             string[]? packages = GetPackages(NewDrive);
@@ -166,10 +181,7 @@ namespace BSPExtractor
                 {
                     string path = NewDrive + @"\Windows\Packages\DsmFiles\" + packagename;
 
-                    Process? proc = new();
-                    proc.StartInfo = new ProcessStartInfo("7za.exe", "x " + path) { WindowStyle = ProcessWindowStyle.Hidden };
-                    proc.Start();
-                    proc.WaitForExit();
+                    RunProgram("7za.exe", "x " + path);
 
                     Stream stream = File.OpenRead(packagename.Replace(".xml", ""));
                     //Stream stream = File.OpenRead(path);//
@@ -210,16 +222,7 @@ namespace BSPExtractor
                 Console.WriteLine("(bspExtractor) " + "Processing registry files...");
                 foreach (string? file in Directory.EnumerateFiles(Output + @"\Registry\cbs\"))
                 {
-                    Process? proc = new()
-                    {
-                        StartInfo = new ProcessStartInfo("SxSExpand.exe", file + " " + Output + @"\Registry\cbs\out")
-                        {
-                            CreateNoWindow = true,
-                            UseShellExecute = false
-                        }
-                    };
-                    proc.Start();
-                    proc.WaitForExit();
+                    RunProgram("SxSExpand.exe", file + " " + Output + @"\Registry\cbs\out");
                     File.Delete(file);
                 }
 
@@ -240,10 +243,7 @@ namespace BSPExtractor
                 Directory.CreateDirectory(Output + @"\Registry\spkg\out\");
                 foreach (string? file in Directory.EnumerateFiles(Output + @"\Registry\spkg\"))
                 {
-                    Process? proc = new();
-                    proc.StartInfo = new ProcessStartInfo("7za.exe", "x " + file + " -o" + Output + @"\Registry\spkg\out -aou") { WindowStyle = ProcessWindowStyle.Hidden };
-                    proc.Start();
-                    proc.WaitForExit();
+                    RunProgram("7za.exe", "x " + file + " -o" + Output + @"\Registry\spkg\out -aou");
                     File.Delete(file);
 
                     //File.Copy(file, Output + @"\Registry\spkg\out\" + file.Split('\\').Last());
@@ -450,10 +450,7 @@ namespace BSPExtractor
                 {
                     string path = NewDrive + @"\Windows\Packages\DsmFiles\" + packagename;
 
-                    Process? proc = new();
-                    proc.StartInfo = new ProcessStartInfo("7za.exe", "x " + path) { WindowStyle = ProcessWindowStyle.Hidden };
-                    proc.Start();
-                    proc.WaitForExit();
+                    RunProgram("7za.exe", "x " + path);
 
                     Stream stream = File.OpenRead(packagename.Replace(".xml", ""));
                     //Stream stream = File.OpenRead(path);//
