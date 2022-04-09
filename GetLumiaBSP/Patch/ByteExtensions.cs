@@ -18,30 +18,27 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace RTInstaller
 {
     internal static class ByteExtensions
     {
-
-        static readonly int[] Empty = new int[0];
+        private static readonly int[] Empty = new int[0];
 
         public static int[] Locate(this byte[] self, byte[] candidate)
         {
             if (IsEmptyLocate(self, candidate))
+            {
                 return Empty;
+            }
 
-            var list = new List<int>();
+            List<int>? list = new();
 
             for (int i = 0; i < self.Length; i++)
             {
                 if (!IsMatch(self, i, candidate))
+                {
                     continue;
+                }
 
                 list.Add(i);
             }
@@ -49,19 +46,25 @@ namespace RTInstaller
             return list.Count == 0 ? Empty : list.ToArray();
         }
 
-        static bool IsMatch(byte[] array, int position, byte[] candidate)
+        private static bool IsMatch(byte[] array, int position, byte[] candidate)
         {
             if (candidate.Length > (array.Length - position))
+            {
                 return false;
+            }
 
             for (int i = 0; i < candidate.Length; i++)
+            {
                 if (array[position + i] != candidate[i])
+                {
                     return false;
+                }
+            }
 
             return true;
         }
 
-        static bool IsEmptyLocate(byte[] array, byte[] candidate)
+        private static bool IsEmptyLocate(byte[] array, byte[] candidate)
         {
             return array == null
                 || candidate == null

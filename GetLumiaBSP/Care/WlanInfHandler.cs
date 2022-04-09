@@ -18,28 +18,28 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace GetLumiaBSP
 {
-    class Package
+    internal class WlanInfHandler
     {
-        public class Checksum
+        public static void GenInfProperly(string QCWLANSYS, string QCWLANDAT)
         {
-            public string value { get; set; }
-            public string type { get; set; }
-        }
+            Console.WriteLine("(wlanCare) Copying files...");
 
-        public class RootObject
-        {
-            public int fileSize { get; set; }
-            public string url { get; set; }
-            public object alternateUrl { get; set; }
-            public List<Checksum> checksum { get; set; }
+            Directory.CreateDirectory("Wlan");
+            File.Move(QCWLANSYS, @"Wlan\" + QCWLANSYS);
+            File.Move(QCWLANDAT, @"Wlan\" + QCWLANDAT);
+
+            if (QCWLANSYS.Contains("8974"))
+            {
+                File.Copy(@"Care\WLANCare\qcwlan8974.inf", @"Wlan\qcwlan8974.inf");
+            }
+            else
+            {
+                File.Copy(@"Care\WLANCare\qcwlan8626.inf", @"Wlan\qcwlan8974.inf");
+            }
+
+            Console.WriteLine("(wlanCare) Done.");
         }
     }
 }

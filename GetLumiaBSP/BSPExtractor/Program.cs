@@ -18,12 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -32,9 +27,9 @@ using System.Xml.Serialization;
 
 namespace BSPExtractor
 {
-    class Program
+    internal class Program
     {
-        private static string[] oems = new string[]
+        private static readonly string[] oems = new string[]
         {
             "MMO",
             "NOKIA",
@@ -43,29 +38,29 @@ namespace BSPExtractor
             "MSAsOEM"
         };
 
-        private static string[] parts = new string[]
+        private static readonly string[] parts = new string[]
         {
             "MainOS"
         };
-        
-        private static string SystemKeyName = "RTSYSTEM";
-        private static string SoftwareKeyName = "RTSOFTWARE";
 
-        static string[] GetPackages(string sourcedrive)
+        private static readonly string SystemKeyName = "RTSYSTEM";
+        private static readonly string SoftwareKeyName = "RTSOFTWARE";
+
+        private static string[] GetPackages(string sourcedrive)
         {
-            var lst = new List<string>();
+            List<string>? lst = new();
             if (Directory.Exists(sourcedrive + @"\Windows\Packages\DsmFiles\"))
             {
-                var files1 = Directory.EnumerateFiles(sourcedrive + @"\Windows\Packages\DsmFiles\");
+                IEnumerable<string>? files1 = Directory.EnumerateFiles(sourcedrive + @"\Windows\Packages\DsmFiles\");
 
-                foreach (var file in files1)
+                foreach (string? file in files1)
                 {
-                    var name = file.Replace(sourcedrive + @"\Windows\Packages\DsmFiles\", "");
-                    foreach (var oem in oems)
+                    string? name = file.Replace(sourcedrive + @"\Windows\Packages\DsmFiles\", "");
+                    foreach (string? oem in oems)
                     {
                         if (name.ToLower().StartsWith(oem.ToLower()))
                         {
-                            foreach (var part in parts)
+                            foreach (string? part in parts)
                             {
                                 if (name.ToLower().Contains(part.ToLower()) || name.Count(x => x == '.') <= 4)
                                 {
@@ -81,21 +76,24 @@ namespace BSPExtractor
 
             if (Directory.Exists(sourcedrive + @"\Windows\servicing\Packages\"))
             {
-                var files2 = Directory.EnumerateFiles(sourcedrive + @"\Windows\servicing\Packages\", "*.mum");
+                IEnumerable<string>? files2 = Directory.EnumerateFiles(sourcedrive + @"\Windows\servicing\Packages\", "*.mum");
 
-                foreach (var file in files2)
+                foreach (string? file in files2)
                 {
-                    var name = file.Replace(sourcedrive + @"\Windows\servicing\Packages\", "");
-                    foreach (var oem in oems)
+                    string? name = file.Replace(sourcedrive + @"\Windows\servicing\Packages\", "");
+                    foreach (string? oem in oems)
                     {
                         if (name.ToLower().StartsWith(oem.ToLower()))
                         {
-                            foreach (var part in parts)
+                            foreach (string? part in parts)
                             {
                                 if (name.ToLower().Contains(part.ToLower()) || name.Count(x => x == '.') <= 6)
                                 {
                                     if (!lst.Any(x => name.ToLower().Contains(x.ToLower())))
+                                    {
                                         lst.Add(name);
+                                    }
+
                                     break;
                                 }
                             }
@@ -108,12 +106,12 @@ namespace BSPExtractor
             return lst.ToArray();
         }
 
-        static void HandleReg(string NewDrive, string Output)
+        private static void HandleReg(string NewDrive, string Output)
         {
-            var packages = GetPackages(NewDrive);
+            string[]? packages = GetPackages(NewDrive);
 
             Console.WriteLine("(bspExtractor) " + "Preparing files for registry import file generation...");
-            foreach (var packagename in packages)
+            foreach (string? packagename in packages)
             {
                 if (File.Exists(NewDrive + @"\Windows\servicing\Packages\" + packagename))
                 {
@@ -121,16 +119,16 @@ namespace BSPExtractor
 
                     Stream stream = File.OpenRead(path);
 
-                    XmlSerializer serializer = new XmlSerializer(typeof(XmlMum.Assembly));
+                    XmlSerializer serializer = new(typeof(XmlMum.Assembly));
                     XmlMum.Assembly package = (XmlMum.Assembly)serializer.Deserialize(stream);
 
                     stream.Close();
 
-                    var entries = package.Package.CustomInformation.File.Where(x => x.Name.ToLower().EndsWith(".manifest") && !x.Name.ToLower().Contains("deployment"));
+                    IEnumerable<XmlMum.File>? entries = package.Package.CustomInformation.File.Where(x => x.Name.ToLower().EndsWith(".manifest") && !x.Name.ToLower().Contains("deployment"));
 
-                    foreach (var entry in entries)
+                    foreach (XmlMum.File? entry in entries)
                     {
-                        var filepath = entry.Name.Replace("$(runtime.bootdrive)", "").Replace("$(runtime.system32)", @"Windows\System32").Replace("$(runtime.systemroot)", "Windows").Replace("$(runtime.drivers)", @"Windows\System32\Drivers").Replace("$(runtime.programfiles)", "Program Files");
+                        string? filepath = entry.Name.Replace("$(runtime.bootdrive)", "").Replace("$(runtime.system32)", @"Windows\System32").Replace("$(runtime.systemroot)", "Windows").Replace("$(runtime.drivers)", @"Windows\System32\Drivers").Replace("$(runtime.programfiles)", "Program Files");
 
                         if (filepath == @"\update.mum")
                         {
@@ -142,13 +140,16 @@ namespace BSPExtractor
                             filepath = filepath.Replace(@"\update.cat", @"\" + packagename.Replace(".mum", ".cat"));
                         }
 
-                        if (filepath.EndsWith(".manifest") && !filepath.Contains(@"\"))
+                        if (filepath.EndsWith(".manifest") && !filepath.Contains('\\'))
                         {
                             filepath = @"\Windows\WinSxS\Manifests\" + filepath;
                         }
 
                         if (!Directory.Exists(Output + @"\Registry\cbs\"))
+                        {
                             Directory.CreateDirectory(Output + @"\Registry\cbs\");
+                        }
+
                         try
                         {
                             File.Copy(NewDrive + @"\" + filepath, Output + @"\Registry\cbs\" + entry.Name);
@@ -165,7 +166,7 @@ namespace BSPExtractor
                 {
                     string path = NewDrive + @"\Windows\Packages\DsmFiles\" + packagename;
 
-                    var proc = new Process();
+                    Process? proc = new();
                     proc.StartInfo = new ProcessStartInfo("7za.exe", "x " + path) { WindowStyle = ProcessWindowStyle.Hidden };
                     proc.Start();
                     proc.WaitForExit();
@@ -173,19 +174,22 @@ namespace BSPExtractor
                     Stream stream = File.OpenRead(packagename.Replace(".xml", ""));
                     //Stream stream = File.OpenRead(path);//
 
-                    XmlSerializer serializer = new XmlSerializer(typeof(XmlDsm.Package));
+                    XmlSerializer serializer = new(typeof(XmlDsm.Package));
                     XmlDsm.Package package = (XmlDsm.Package)serializer.Deserialize(stream);
 
                     stream.Close();
 
                     File.Delete(packagename.Replace(".xml", ""));
 
-                    var entries = package.Files.FileEntry.Where(x => x.DevicePath.ToLower().Contains(@"windows\packages\registryfiles\"));
+                    IEnumerable<XmlDsm.FileEntry>? entries = package.Files.FileEntry.Where(x => x.DevicePath.ToLower().Contains(@"windows\packages\registryfiles\"));
 
-                    foreach (var entry in entries)
+                    foreach (XmlDsm.FileEntry? entry in entries)
                     {
                         if (!Directory.Exists(Output + @"\Registry\spkg\"))
+                        {
                             Directory.CreateDirectory(Output + @"\Registry\spkg\");
+                        }
+
                         try
                         {
                             File.Copy(NewDrive + entry.DevicePath, Output + @"\Registry\spkg\" + entry.DevicePath.Split('\\').Last());
@@ -204,9 +208,9 @@ namespace BSPExtractor
             {
                 Directory.CreateDirectory(Output + @"\Registry\cbs\out");
                 Console.WriteLine("(bspExtractor) " + "Processing registry files...");
-                foreach (var file in Directory.EnumerateFiles(Output + @"\Registry\cbs\"))
+                foreach (string? file in Directory.EnumerateFiles(Output + @"\Registry\cbs\"))
                 {
-                    var proc = new Process
+                    Process? proc = new()
                     {
                         StartInfo = new ProcessStartInfo("SxSExpand.exe", file + " " + Output + @"\Registry\cbs\out")
                         {
@@ -221,7 +225,7 @@ namespace BSPExtractor
 
                 if (Directory.Exists(Output + @"\Registry\cbs\out"))
                 {
-                    foreach (var file in Directory.EnumerateFiles(Output + @"\Registry\cbs\out\"))
+                    foreach (string? file in Directory.EnumerateFiles(Output + @"\Registry\cbs\out\"))
                     {
                         HandleCbsFile(file, Output + @"\Registry\");
                     }
@@ -234,9 +238,9 @@ namespace BSPExtractor
             {
                 Console.WriteLine("(bspExtractor) " + "Processing registry files...");
                 Directory.CreateDirectory(Output + @"\Registry\spkg\out\");
-                foreach (var file in Directory.EnumerateFiles(Output + @"\Registry\spkg\"))
+                foreach (string? file in Directory.EnumerateFiles(Output + @"\Registry\spkg\"))
                 {
-                    var proc = new Process();
+                    Process? proc = new();
                     proc.StartInfo = new ProcessStartInfo("7za.exe", "x " + file + " -o" + Output + @"\Registry\spkg\out -aou") { WindowStyle = ProcessWindowStyle.Hidden };
                     proc.Start();
                     proc.WaitForExit();
@@ -248,28 +252,28 @@ namespace BSPExtractor
                 Console.WriteLine("(bspExtractor) " + "Reading files...");
                 if (Directory.Exists(Output + @"\Registry\spkg\out"))
                 {
-                    foreach (var file in Directory.EnumerateFiles(Output + @"\Registry\spkg\out"))
+                    foreach (string? file in Directory.EnumerateFiles(Output + @"\Registry\spkg\out"))
                     {
                         //var ownerSecurity = new FileSecurity();
                         //ownerSecurity.SetOwner(new SecurityIdentifier(WellKnownSidType.WorldSid, null));
                         //File.SetAccessControl(file, ownerSecurity);
 
-                        var accessSecurity = new FileSecurity();
+                        FileSecurity? accessSecurity = new();
                         accessSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, AccessControlType.Allow));
-                        File.SetAccessControl(file, accessSecurity);
+                        new FileInfo(file).SetAccessControl(accessSecurity);
 
                         //var file = string.Join("\\", file2.Split('\\').Reverse().Skip(1).Reverse()) + @"\out\" + string.Join("\\", file2.Split('\\').Last());
-                        var content = KeyNameReplace(File.ReadAllText(file));
+                        string? content = KeyNameReplace(File.ReadAllText(file));
                         File.Delete(file);
                         File.WriteAllText(file, content);
 
                         if (content.Contains("; RegistrySource="))
                         {
-                            foreach (var part in content.Split(new string[] { "; RegistrySource=" }, StringSplitOptions.None).Skip(1))
+                            foreach (string? part in content.Split(new string[] { "; RegistrySource=" }, StringSplitOptions.None).Skip(1))
                             {
-                                var src = part.Split('\n').First().Replace("\r", "").Replace("_1", "");
+                                string? src = part.Split('\n').First().Replace("\r", "").Replace("_1", "");
 
-                                var newcontent = "; RegistrySource=" + file.Split('\\').Last().Replace("_1", "") + ".reg" + string.Join("\n", part.Split('\n').Skip(1));
+                                string? newcontent = "; RegistrySource=" + file.Split('\\').Last().Replace("_1", "") + ".reg" + string.Join("\n", part.Split('\n').Skip(1));
 
                                 if (File.Exists(Output + @"\Registry\" + src))
                                 {
@@ -283,9 +287,13 @@ namespace BSPExtractor
                         else
                         {
                             if (!File.Exists(Output + @"\Registry\" + file.Split('\\').Last().Replace("_1", "").Replace(".rga", "").Replace(".reg", "") + ".reg"))
+                            {
                                 File.Move(file, Output + @"\Registry\" + file.Split('\\').Last().Replace("_1", "").Replace(".rga", "").Replace(".reg", "") + ".reg");
+                            }
                             else
+                            {
                                 File.AppendAllText(Output + @"\Registry\" + file.Split('\\').Last().Replace("_1", "").Replace(".rga", "").Replace(".reg", "") + ".reg", File.ReadAllText(file).Replace("Windows Registry Editor Version 5.00", "; RegistrySource=" + file.Split('\\').Last().Replace("_1", "").Replace(".rga", "").Replace(".reg", "") + ".reg"), Encoding.ASCII);
+                            }
                         }
                     }
                     Console.WriteLine("(bspExtractor) " + "Cleaning up...");
@@ -294,27 +302,27 @@ namespace BSPExtractor
             }
         }
 
-        static void HandleCbsFile(string file, string outputFolder)
+        private static void HandleCbsFile(string file, string outputFolder)
         {
             Stream stream = File.OpenRead(file);
 
-            var name = file.Split('\\').Last();
+            string? name = file.Split('\\').Last();
 
-            XmlSerializer serializer = new XmlSerializer(typeof(XmlMum.Assembly));
+            XmlSerializer serializer = new(typeof(XmlMum.Assembly));
             XmlMum.Assembly cbs = (XmlMum.Assembly)serializer.Deserialize(stream);
 
-            name = cbs.AssemblyIdentity.Name.Substring(0, cbs.AssemblyIdentity.Name.Length - 1);
+            name = cbs.AssemblyIdentity.Name[0..^1];
 
-            if (cbs.RegistryKeys != null && cbs.RegistryKeys.Count() > 0)
+            if (cbs.RegistryKeys != null && cbs.RegistryKeys.Count > 0)
             {
-                CbsToReg regExporter = new CbsToReg();
+                CbsToReg regExporter = new();
 
-                foreach (var regKey in cbs.RegistryKeys)
+                foreach (XmlMum.RegistryKey? regKey in cbs.RegistryKeys)
                 {
-                    var keyValues = new List<RegistryValue>(regKey.RegistryValues.Count);
-                    foreach (var keyValue in regKey.RegistryValues)
+                    List<RegistryValue>? keyValues = new(regKey.RegistryValues.Count);
+                    foreach (XmlMum.RegistryValue? keyValue in regKey.RegistryValues)
                     {
-                        keyValues.Add(new RegistryValue(keyValue.Name, keyValue.Value, keyValue.ValueType, 
+                        keyValues.Add(new RegistryValue(keyValue.Name, keyValue.Value, keyValue.ValueType,
                                                         keyValue.Mutable, keyValue.OperationHint));
                     }
 
@@ -330,31 +338,31 @@ namespace BSPExtractor
             stream.Close();
         }
 
-        static void HandleFiles(string NewDrive, string Output)
+        private static void HandleFiles(string NewDrive, string Output)
         {
             Console.WriteLine("(bspExtractor) " + "Processing files...");
-            var packages = GetPackages(NewDrive);
+            string[]? packages = GetPackages(NewDrive);
 
-            foreach (var packagename in packages)
+            foreach (string? packagename in packages)
             {
-                var othername = packagename.Replace(".dsm.xml", "");
+                string? othername = packagename.Replace(".dsm.xml", "");
 
                 if (File.Exists(NewDrive + @"\Windows\servicing\Packages\" + packagename))
                 {
                     string path = NewDrive + @"\Windows\servicing\Packages\" + packagename;
-                    
+
                     othername = packagename.Split('~').First();
 
                     Stream stream = File.OpenRead(path);
 
-                    XmlSerializer serializer = new XmlSerializer(typeof(XmlMum.Assembly));
+                    XmlSerializer serializer = new(typeof(XmlMum.Assembly));
                     XmlMum.Assembly package = (XmlMum.Assembly)serializer.Deserialize(stream);
 
                     stream.Close();
 
-                    var entries = package.Package.CustomInformation.File;
-                    var catpath = (@"\Windows\servicing\Packages\" + packagename).Replace(".mum", ".cat");
-                    var catfilepath = catpath.Replace("$(runtime.bootdrive)", "").Replace("$(runtime.system32)", @"Windows\System32").Replace("$(runtime.systemroot)", "Windows").Replace("$(runtime.drivers)", @"Windows\System32\Drivers").Replace("$(runtime.programfiles)", "Program Files");
+                    List<XmlMum.File>? entries = package.Package.CustomInformation.File;
+                    string? catpath = (@"\Windows\servicing\Packages\" + packagename).Replace(".mum", ".cat");
+                    string? catfilepath = catpath.Replace("$(runtime.bootdrive)", "").Replace("$(runtime.system32)", @"Windows\System32").Replace("$(runtime.systemroot)", "Windows").Replace("$(runtime.drivers)", @"Windows\System32\Drivers").Replace("$(runtime.programfiles)", "Program Files");
 
                     if (catfilepath == @"\update.mum")
                     {
@@ -366,7 +374,7 @@ namespace BSPExtractor
                         catfilepath = catfilepath.Replace(@"\update.cat", @"\" + packagename.Replace(".mum", ".cat"));
                     }
 
-                    if (catfilepath.EndsWith(".manifest") && !catfilepath.Contains(@"\"))
+                    if (catfilepath.EndsWith(".manifest") && !catfilepath.Contains('\\'))
                     {
                         if (!catfilepath.Contains(".deployment_"))
                         {
@@ -376,7 +384,10 @@ namespace BSPExtractor
                     }
 
                     if (!Directory.Exists(Output + @"\Files\" + othername + string.Join("\\", catfilepath.Split('\\').Reverse().Skip(1).Reverse())))
+                    {
                         Directory.CreateDirectory(Output + @"\Files\" + othername + @"\" + string.Join("\\", catfilepath.Split('\\').Reverse().Skip(1).Reverse()));
+                    }
+
                     try
                     {
                         File.Copy(NewDrive + @"\" + catfilepath, Output + @"\Files\" + othername + @"\" + catfilepath);
@@ -388,13 +399,15 @@ namespace BSPExtractor
                         Console.ResetColor();
                     }
 
-                    foreach (var entry in entries)
+                    foreach (XmlMum.File? entry in entries)
                     {
                         string outfolder = othername;
                         if (!string.IsNullOrEmpty(entry.SourcePackage))
+                        {
                             outfolder = entry.SourcePackage;
-                        
-                        var filepath = entry.Name.Replace("$(runtime.bootdrive)", "").Replace("$(runtime.system32)", @"Windows\System32").Replace("$(runtime.systemroot)", "Windows").Replace("$(runtime.drivers)", @"Windows\System32\Drivers").Replace("$(runtime.programfiles)", "Program Files");
+                        }
+
+                        string? filepath = entry.Name.Replace("$(runtime.bootdrive)", "").Replace("$(runtime.system32)", @"Windows\System32").Replace("$(runtime.systemroot)", "Windows").Replace("$(runtime.drivers)", @"Windows\System32\Drivers").Replace("$(runtime.programfiles)", "Program Files");
 
                         if (filepath == @"\update.mum")
                         {
@@ -406,7 +419,7 @@ namespace BSPExtractor
                             filepath = filepath.Replace(@"\update.cat", @"\" + packagename.Replace(".mum", ".cat"));
                         }
 
-                        if (filepath.EndsWith(".manifest") && !filepath.Contains(@"\"))
+                        if (filepath.EndsWith(".manifest") && !filepath.Contains('\\'))
                         {
                             if (!filepath.Contains(".deployment_"))
                             {
@@ -415,9 +428,12 @@ namespace BSPExtractor
                             }
                             filepath = @"\Windows\WinSxS\Manifests\" + filepath;
                         }
-                        
+
                         if (!Directory.Exists(Output + @"\Files\" + outfolder + @"\" + string.Join("\\", filepath.Split('\\').Reverse().Skip(1).Reverse())))
+                        {
                             Directory.CreateDirectory(Output + @"\Files\" + outfolder + @"\" + string.Join("\\", filepath.Split('\\').Reverse().Skip(1).Reverse()));
+                        }
+
                         try
                         {
                             File.Copy(NewDrive + @"\" + filepath, Output + @"\Files\" + outfolder + @"\" + filepath);
@@ -434,7 +450,7 @@ namespace BSPExtractor
                 {
                     string path = NewDrive + @"\Windows\Packages\DsmFiles\" + packagename;
 
-                    var proc = new Process();
+                    Process? proc = new();
                     proc.StartInfo = new ProcessStartInfo("7za.exe", "x " + path) { WindowStyle = ProcessWindowStyle.Hidden };
                     proc.Start();
                     proc.WaitForExit();
@@ -442,23 +458,28 @@ namespace BSPExtractor
                     Stream stream = File.OpenRead(packagename.Replace(".xml", ""));
                     //Stream stream = File.OpenRead(path);//
 
-                    XmlSerializer serializer = new XmlSerializer(typeof(XmlDsm.Package));
+                    XmlSerializer serializer = new(typeof(XmlDsm.Package));
                     XmlDsm.Package package = (XmlDsm.Package)serializer.Deserialize(stream);
 
                     stream.Close();
 
                     File.Delete(packagename.Replace(".xml", ""));
 
-                    var entries = package.Files.FileEntry;
+                    List<XmlDsm.FileEntry>? entries = package.Files.FileEntry;
 
-                    foreach (var entry in entries)
+                    foreach (XmlDsm.FileEntry? entry in entries)
                     {
                         string outfolder = othername;
                         if (!string.IsNullOrEmpty(entry.SourcePackage))
+                        {
                             outfolder = entry.SourcePackage;
+                        }
 
                         if (!Directory.Exists(Output + @"\Files\" + outfolder + @"\" + string.Join("\\", entry.DevicePath.Split('\\').Reverse().Skip(1).Reverse())))
+                        {
                             Directory.CreateDirectory(Output + @"\Files\" + outfolder + @"\" + string.Join("\\", entry.DevicePath.Split('\\').Reverse().Skip(1).Reverse()));
+                        }
+
                         try
                         {
                             File.Copy(NewDrive + entry.DevicePath, Output + @"\Files\" + outfolder + @"\" + entry.DevicePath);
@@ -483,12 +504,12 @@ namespace BSPExtractor
 
             Console.WriteLine("(bspExtractor) " + "Done.");
         }
-        
+
         private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
         {
             try
             {
-                DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+                DirectoryInfo dir = new(sourceDirName);
                 DirectoryInfo[] dirs = dir.GetDirectories();
 
                 // If the source directory does not exist, throw an exception.

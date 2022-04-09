@@ -19,17 +19,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using CommandLine;
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 
 namespace GetLumiaBSP
 {
-    class Program
+    internal class Program
     {
-        private static string[] directx = new string[]
+        private static readonly string[] directx = new string[]
         {
             "qcvss",
             "direct3d",
@@ -40,125 +36,84 @@ namespace GetLumiaBSP
         public static object Options;
         public static string OptionVerb;
 
-        static void Main(string[] args)
+        private static void PrintLogo()
         {
-            Console.Title = "Get Lumia BSP Command Line Interface";
+            Console.WriteLine($"GetLumiaBSP {Assembly.GetExecutingAssembly().GetName().Version} - Get Lumia BSP Command Line Interface");
+            Console.WriteLine("Copyright (c) Gustave Monce and Contributors");
+            Console.WriteLine("https://github.com/gus33000/GetLumiaBSP");
+            Console.WriteLine();
+            Console.WriteLine("This program comes with ABSOLUTELY NO WARRANTY.");
+            Console.WriteLine("This is free software, and you are welcome to redistribute it under certain conditions.");
+            Console.WriteLine();
+        }
 
-            CLIOptions baseOptions = new CLIOptions();
-            if (!Parser.Default.ParseArguments(args,
-               baseOptions,
-               (s, o) =>
-               {
-                   OptionVerb = s;
-                   Options = o;
-               }))
-            {
-                Environment.Exit(Parser.DefaultExitCodeFail);
-            }
+        private static int Main(string[] args)
+        {
+            return Parser.Default.ParseArguments<SecWim2WimOptions, ENOSWDownloadOptions, InfOptions, UnBSPOptions, RegExtractionMainOSOptions, RegExtractionWimOptions>(args).MapResult(
+              (SecWim2WimOptions arg) =>
+              {
+                  PrintLogo();
+                  if (File.Exists(arg.path))
+                  {
+                      ENOSWPackageDownloader.ConvertSECWIM2WIM(arg.path, arg.output);
+                  }
 
-            Assembly ass = Assembly.GetExecutingAssembly();
-            FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(ass.Location);
-
-            Console.WriteLine("");
-
-            Console.WriteLine(fvi.FileDescription + " " + ass.GetName().Version.ToString());
-            Console.WriteLine(fvi.LegalCopyright);
-
-            Console.WriteLine("");
-
-            switch (OptionVerb)
-            {
-                case "secwim2wim":
-                    {
-                        var arg = (secwim2wimOptions)Options;
-
-                        if (File.Exists(arg.path))
-                            ENOSWPackageDownloader.ConvertSECWIM2WIM(arg.path, arg.output);
-
-                        break;
-                    }
-                case "enoswdl":
-                    {
-                        var arg = (enoswdlOptions)Options;
-
-                        ENOSWPackageDownloader.DownloadENOSWPackage(arg.rmcode, arg.path + "\\");
-
-                        break;
-                    }
-                case "unbsp":
-                    {
-                        var arg = (unbspOptions)Options;
-
-                        UnBSP(arg.path);
-
-                        break;
-                    }
-                case "reg_enosw":
-                    {
-                        var arg = (RegOptions)Options;
-
-                        RegWIM(arg.path, !arg.patcherno, !arg.dxcareno, !arg.wlancareno, !arg.mbbcareno, !arg.uartcareno, !arg.rtcareno, arg.signingcert, !arg.mergeno);
-
-                        break;
-                    }
-                case "reg_mountedfs":
-                    {
-                        var arg = (RegOptions)Options;
-
-                        RegMounted(arg.path, !arg.patcherno, !arg.dxcareno, !arg.wlancareno, !arg.mbbcareno, !arg.uartcareno, !arg.rtcareno, arg.signingcert, !arg.mergeno);
-
-                        break;
-                    }
-                case "reg_hybrid":
-                    {
-                        var arg = (RegOptions2)Options;
-
-                        Console.WriteLine("Comming soon!");
-
-                        break;
-                    }
-                case "inf_enosw":
-                    {
-                        var arg = (InfOptions)Options;
-
-                        Console.WriteLine("Comming soon!");
-
-                        break;
-                    }
-                case "inf_mountedfs":
-                    {
-                        var arg = (InfOptions)Options;
-
-                        Console.WriteLine("Comming soon!");
-
-                        break;
-                    }
-            }
-
-            Console.ReadKey();
-
-
+                  return 0;
+              },
+              (ENOSWDownloadOptions arg) =>
+              {
+                  PrintLogo();
+                  ENOSWPackageDownloader.DownloadENOSWPackage(arg.rmcode, arg.path + "\\");
+                  return 0;
+              },
+              (InfOptions arg) =>
+              {
+                  PrintLogo();
+                  Console.WriteLine("Coming soon!");
+                  return 0;
+              },
+              (UnBSPOptions arg) =>
+              {
+                  PrintLogo();
+                  UnBSP(arg.path);
+                  return 0;
+              },
+              (RegExtractionMainOSOptions arg) =>
+              {
+                  PrintLogo();
+                  RegMounted(arg.path, !arg.patcherno, !arg.dxcareno, !arg.wlancareno, !arg.mbbcareno, !arg.uartcareno, !arg.rtcareno, arg.signingcert, !arg.mergeno);
+                  return 0;
+              },
+              (RegExtractionWimOptions arg) =>
+              {
+                  PrintLogo();
+                  RegWIM(arg.path, !arg.patcherno, !arg.dxcareno, !arg.wlancareno, !arg.mbbcareno, !arg.uartcareno, !arg.rtcareno, arg.signingcert, !arg.mergeno);
+                  return 0;
+              },
+              errs => 1);
         }
 
         public static void UnBSP(string imagepath)
         {
             //RegMounted(imagepath, false, false, false, false, false, false, null, true);
 
-            foreach (var item in Directory.EnumerateFiles("root", "*", SearchOption.AllDirectories))
+            foreach (string? item in Directory.EnumerateFiles("root", "*", SearchOption.AllDirectories))
             {
                 // Delete files
-                var todelete = imagepath + string.Join("", item.Skip(4));
+                string? todelete = imagepath + string.Join("", item.Skip(4));
                 Console.WriteLine(todelete);
                 File.Delete(todelete);
             }
 
-            var text = File.ReadAllText("import.reg").Replace(",\\\r\n", ",");
-            var lines = text.Replace("\r", "").Split('\n').ToList();
-            
+            string? text = File.ReadAllText("import.reg").Replace(",\\\r\n", ",");
+            List<string>? lines = text.Replace("\r", "").Split('\n').ToList();
+
             for (int i = 0; i < lines.Count; i++)
             {
-                if (lines[i].Contains("="))
+                if (lines[i].Contains('='))
+                {
                     lines[i] = lines[i].Split('=')[0] + "=-";
+                }
             }
 
             File.Delete("import.reg");
@@ -197,12 +152,14 @@ namespace GetLumiaBSP
             if (PatchCare)
             {
                 Console.WriteLine("(patcher) Starting enumeration...");
-                var filesall = Directory.EnumerateFiles(@"out\Files", "*.*", SearchOption.AllDirectories);
-                foreach (var stuff in filesall)
+                IEnumerable<string>? filesall = Directory.EnumerateFiles(@"out\Files", "*.*", SearchOption.AllDirectories);
+                foreach (string? stuff in filesall)
                 {
-                    bool patched;
-                    var read = RTInstaller.HandleFile.GetProperBytes(stuff, out patched);
-                    if (patched) File.WriteAllBytes(stuff, read);
+                    byte[]? read = RTInstaller.HandleFile.GetProperBytes(stuff, out bool patched);
+                    if (patched)
+                    {
+                        File.WriteAllBytes(stuff, read);
+                    }
                 }
 
                 Console.WriteLine("(patcher) Adding AnotherSuite patches to Registry...");
@@ -217,25 +174,37 @@ namespace GetLumiaBSP
             // DXCare section
             //
 
-            if (DXCareRT) DXCare();
+            if (DXCareRT)
+            {
+                DXCare();
+            }
 
             //
             // WlanCare section
             //
 
-            if (WlanCareRT) WlanCare();
+            if (WlanCareRT)
+            {
+                WlanCare();
+            }
 
             //
             // MbbCare section
             //
 
-            if (MbbCareRT) MbbCare();
+            if (MbbCareRT)
+            {
+                MbbCare();
+            }
 
             //
             // UartCare section
             //
 
-            if (UartCareRT) UartCare();
+            if (UartCareRT)
+            {
+                UartCare();
+            }
 
             //
             // Merging section
@@ -243,8 +212,8 @@ namespace GetLumiaBSP
 
             if (merge)
             {
-                var dirsfi = Directory.EnumerateDirectories(@"out\Files");
-                foreach (var dir in dirsfi)
+                IEnumerable<string>? dirsfi = Directory.EnumerateDirectories(@"out\Files");
+                foreach (string? dir in dirsfi)
                 {
                     Console.WriteLine("(processing) Merging " + dir + "...");
                     CopyDir(dir, "root");
@@ -253,11 +222,11 @@ namespace GetLumiaBSP
 
                 Directory.Delete(@"out\Files", true);
 
-                var regsfi = Directory.EnumerateFiles(@"out\Registry");
-                foreach (var reg in regsfi)
+                IEnumerable<string>? regsfi = Directory.EnumerateFiles(@"out\Registry");
+                foreach (string? reg in regsfi)
                 {
                     Console.WriteLine("(processing) Merging " + reg + "...");
-                    var lines = String.Join("\r\n", File.ReadLines(reg).Skip(1).ToArray()) + "\r\n";
+                    string? lines = string.Join("\r\n", File.ReadLines(reg).Skip(1).ToArray()) + "\r\n";
                     regcontent += lines;
                     File.Delete(reg);
                 }
@@ -288,12 +257,14 @@ namespace GetLumiaBSP
             if (PatchCare)
             {
                 Console.WriteLine("(patcher) Starting enumeration...");
-                var filesall = Directory.EnumerateFiles(@"out\Files", "*.*", SearchOption.AllDirectories);
-                foreach (var stuff in filesall)
+                IEnumerable<string>? filesall = Directory.EnumerateFiles(@"out\Files", "*.*", SearchOption.AllDirectories);
+                foreach (string? stuff in filesall)
                 {
-                    bool patched;
-                    var read = RTInstaller.HandleFile.GetProperBytes(stuff, out patched);
-                    if (patched) File.WriteAllBytes(stuff, read);
+                    byte[]? read = RTInstaller.HandleFile.GetProperBytes(stuff, out bool patched);
+                    if (patched)
+                    {
+                        File.WriteAllBytes(stuff, read);
+                    }
                 }
 
                 Console.WriteLine("(patcher) Adding AnotherSuite patches to Registry...");
@@ -308,27 +279,42 @@ namespace GetLumiaBSP
             // DXCare section
             //
 
-            if (DXCareRT) DXCare();
+            if (DXCareRT)
+            {
+                DXCare();
+            }
 
             //
             // WlanCare section
             //
 
-            if (WlanCareRT) WlanCare();
+            if (WlanCareRT)
+            {
+                WlanCare();
+            }
 
             //
             // MbbCare section
             //
 
-            if (MbbCareRT) MbbCare();
+            if (MbbCareRT)
+            {
+                MbbCare();
+            }
 
             //
             // UartCare section
             //
 
-            if (UartCareRT) UartCare();
+            if (UartCareRT)
+            {
+                UartCare();
+            }
 
-            if (RTCare) RtCare();
+            if (RTCare)
+            {
+                RtCare();
+            }
 
             //
             // Merging section
@@ -336,8 +322,8 @@ namespace GetLumiaBSP
 
             if (merge)
             {
-                var dirsfi = Directory.EnumerateDirectories(@"out\Files");
-                foreach (var dir in dirsfi)
+                IEnumerable<string>? dirsfi = Directory.EnumerateDirectories(@"out\Files");
+                foreach (string? dir in dirsfi)
                 {
                     Console.WriteLine("(processing) Merging " + dir + "...");
                     CopyDir(dir, "root");
@@ -346,11 +332,11 @@ namespace GetLumiaBSP
 
                 Directory.Delete(@"out\Files", true);
 
-                var regsfi = Directory.EnumerateFiles(@"out\Registry");
-                foreach (var reg in regsfi)
+                IEnumerable<string>? regsfi = Directory.EnumerateFiles(@"out\Registry");
+                foreach (string? reg in regsfi)
                 {
                     Console.WriteLine("(processing) Merging " + reg + "...");
-                    var lines = String.Join("\r\n", File.ReadLines(reg).Skip(1).ToArray()) + "\r\n";
+                    string? lines = string.Join("\r\n", File.ReadLines(reg).Skip(1).ToArray()) + "\r\n";
                     regcontent += lines;
                     File.Delete(reg);
                 }
@@ -370,30 +356,35 @@ namespace GetLumiaBSP
         public static void RtCare()
         {
             string banned = "Customizations";
-            var dirs = Directory.EnumerateDirectories(@"out\Files");
-            var regs = Directory.EnumerateFiles(@"out\Registry");
+            IEnumerable<string>? dirs = Directory.EnumerateDirectories(@"out\Files");
+            IEnumerable<string>? regs = Directory.EnumerateFiles(@"out\Registry");
 
-            foreach (var dir in dirs)
+            foreach (string? dir in dirs)
+            {
                 if (dir.ToLower().Contains(banned.ToLower()))
                 {
                     Console.WriteLine("(rtCare) Deleting " + dir + "...");
                     Directory.Delete(dir, true);
                 }
-            foreach (var reg in regs)
+            }
+
+            foreach (string? reg in regs)
+            {
                 if (reg.ToLower().Contains(banned.ToLower()))
                 {
                     Console.WriteLine("(rtCare) Deleting " + reg + "...");
                     File.Delete(reg);
                 }
+            }
         }
 
         public static void WlanCare()
         {
-            var WlanFile = "";
-            var WlanDatFile = "";
+            string? WlanFile = "";
+            string? WlanDatFile = "";
 
-            var dirs = Directory.EnumerateDirectories(@"out\Files");
-            foreach (var dir in dirs)
+            IEnumerable<string>? dirs = Directory.EnumerateDirectories(@"out\Files");
+            foreach (string? dir in dirs)
             {
                 bool wlanrel = false;
                 if (dir.ToLower().Contains("wlan"))
@@ -402,13 +393,13 @@ namespace GetLumiaBSP
                 }
                 if (wlanrel)
                 {
-                    var wlan8974 = Directory.EnumerateFiles(dir, "qcwlan8*74.sys", SearchOption.AllDirectories);
-                    var wlan8626 = Directory.EnumerateFiles(dir, "qcwlan8*26.sys", SearchOption.AllDirectories);
-                    var wlandat = Directory.EnumerateFiles(dir, "qcwlan*cfg.dat", SearchOption.AllDirectories);
+                    IEnumerable<string>? wlan8974 = Directory.EnumerateFiles(dir, "qcwlan8*74.sys", SearchOption.AllDirectories);
+                    IEnumerable<string>? wlan8626 = Directory.EnumerateFiles(dir, "qcwlan8*26.sys", SearchOption.AllDirectories);
+                    IEnumerable<string>? wlandat = Directory.EnumerateFiles(dir, "qcwlan*cfg.dat", SearchOption.AllDirectories);
 
                     if (wlan8974 != null)
                     {
-                        foreach (var itm in wlan8974)
+                        foreach (string? itm in wlan8974)
                         {
                             WlanFile = itm.Split('\\').Last();
                         }
@@ -416,7 +407,7 @@ namespace GetLumiaBSP
 
                     if (wlan8626 != null)
                     {
-                        foreach (var itm in wlan8626)
+                        foreach (string? itm in wlan8626)
                         {
                             WlanFile = itm.Split('\\').Last();
                         }
@@ -424,21 +415,21 @@ namespace GetLumiaBSP
 
                     if (wlandat != null)
                     {
-                        foreach (var itm in wlandat)
+                        foreach (string? itm in wlandat)
                         {
                             WlanDatFile = itm.Split('\\').Last();
                         }
                     }
                 }
             }
-            
+
             if (!string.IsNullOrEmpty(WlanFile) && !string.IsNullOrEmpty(WlanDatFile))
             {
                 File.Copy(WlanFile, WlanFile.Split('\\').Last());
                 File.Copy(WlanDatFile, WlanDatFile.Split('\\').Last());
             }
 
-            foreach (var dir in dirs)
+            foreach (string? dir in dirs)
             {
                 bool wlanrel = false;
                 if (dir.ToLower().Contains("wlan"))
@@ -460,11 +451,11 @@ namespace GetLumiaBSP
 
         public static void MbbCare()
         {
-            var MbbFile = "";
+            string? MbbFile = "";
             string MbbReg = "";
 
-            var dirs = Directory.EnumerateDirectories(@"out\Files");
-            foreach (var dir in dirs)
+            IEnumerable<string>? dirs = Directory.EnumerateDirectories(@"out\Files");
+            foreach (string? dir in dirs)
             {
                 bool mbbrel = false;
                 if (dir.ToLower().Contains("mbb") && !dir.ToLower().Contains("mbbuio"))
@@ -473,11 +464,11 @@ namespace GetLumiaBSP
                 }
                 if (mbbrel)
                 {
-                    var mbb = Directory.EnumerateFiles(dir, "qcmbb*", SearchOption.AllDirectories);
+                    IEnumerable<string>? mbb = Directory.EnumerateFiles(dir, "qcmbb*", SearchOption.AllDirectories);
 
                     if (mbb != null)
                     {
-                        foreach (var itm in mbb)
+                        foreach (string? itm in mbb)
                         {
                             MbbFile = itm.Split('\\').Last();
                             Console.WriteLine("(mbbCare) Copying QCMBB...");
@@ -491,8 +482,8 @@ namespace GetLumiaBSP
 
             if (!string.IsNullOrEmpty(MbbFile))
             {
-                var regs = Directory.EnumerateFiles(@"out\Registry");
-                foreach (var reg in regs)
+                IEnumerable<string>? regs = Directory.EnumerateFiles(@"out\Registry");
+                foreach (string? reg in regs)
                 {
                     bool mbbrel = false;
                     if (reg.ToLower().Contains("mbb") && !reg.ToLower().Contains("mbbuio"))
@@ -513,11 +504,11 @@ namespace GetLumiaBSP
 
         public static void UartCare()
         {
-            var UartFile = "";
+            string? UartFile = "";
             string UartReg = "";
 
-            var dirs = Directory.EnumerateDirectories(@"out\Files");
-            foreach (var dir in dirs)
+            IEnumerable<string>? dirs = Directory.EnumerateDirectories(@"out\Files");
+            foreach (string? dir in dirs)
             {
                 bool uartrel = false;
                 if (dir.ToLower().Contains("qualcomm_uart"))
@@ -526,11 +517,11 @@ namespace GetLumiaBSP
                 }
                 if (uartrel)
                 {
-                    var uart = Directory.EnumerateFiles(dir, "qcuart*", SearchOption.AllDirectories);
+                    IEnumerable<string>? uart = Directory.EnumerateFiles(dir, "qcuart*", SearchOption.AllDirectories);
 
                     if (uart != null)
                     {
-                        foreach (var itm in uart)
+                        foreach (string? itm in uart)
                         {
                             UartFile = itm.Split('\\').Last();
                             Console.WriteLine("(uartCare) Copying QCUART...");
@@ -544,8 +535,8 @@ namespace GetLumiaBSP
 
             if (!string.IsNullOrEmpty(UartFile))
             {
-                var regs = Directory.EnumerateFiles(@"out\Registry");
-                foreach (var reg in regs)
+                IEnumerable<string>? regs = Directory.EnumerateFiles(@"out\Registry");
+                foreach (string? reg in regs)
                 {
                     bool uartrel = false;
                     if (reg.ToLower().Contains("qualcomm_uart"))
@@ -567,27 +558,30 @@ namespace GetLumiaBSP
         public static void DXCare()
         {
             string DXReg = "";
-            var dxfile = "";
-            var vssfile = "";
+            string? dxfile = "";
+            string? vssfile = "";
 
-            var dirs = Directory.EnumerateDirectories(@"out\Files");
-            foreach (var dir in dirs)
+            IEnumerable<string>? dirs = Directory.EnumerateDirectories(@"out\Files");
+            foreach (string? dir in dirs)
             {
                 bool dxrel = false;
-                foreach (var itm in directx)
+                foreach (string? itm in directx)
+                {
                     if (dir.ToLower().Contains(itm.ToLower()))
                     {
                         dxrel = true;
                         break;
                     }
+                }
+
                 if (dxrel)
                 {
-                    var vss = Directory.EnumerateFiles(dir, "qcvss*.mbn", SearchOption.AllDirectories);
-                    var dx = Directory.EnumerateFiles(dir, "qcdxkm*.sys", SearchOption.AllDirectories);
+                    IEnumerable<string>? vss = Directory.EnumerateFiles(dir, "qcvss*.mbn", SearchOption.AllDirectories);
+                    IEnumerable<string>? dx = Directory.EnumerateFiles(dir, "qcdxkm*.sys", SearchOption.AllDirectories);
 
                     if (vss != null)
                     {
-                        foreach (var itm in vss)
+                        foreach (string? itm in vss)
                         {
                             vssfile = itm.Split('\\').Last();
                             Console.WriteLine("(dxCare) Moving QCVSS...");
@@ -597,7 +591,7 @@ namespace GetLumiaBSP
 
                     if (dx != null)
                     {
-                        foreach (var itm in dx)
+                        foreach (string? itm in dx)
                         {
                             dxfile = itm.Split('\\').Last();
                             Console.WriteLine("(dxCare) Moving QCDXKM...");
@@ -607,32 +601,40 @@ namespace GetLumiaBSP
                 }
             }
 
-            var regs = Directory.EnumerateFiles(@"out\Registry");
-            foreach (var reg in regs)
+            IEnumerable<string>? regs = Directory.EnumerateFiles(@"out\Registry");
+            foreach (string? reg in regs)
             {
                 bool dxrel = false;
-                foreach (var itm in directx)
+                foreach (string? itm in directx)
+                {
                     if (reg.ToLower().Contains(itm.ToLower()))
                     {
                         dxrel = true;
                         break;
                     }
+                }
+
                 if (dxrel)
                 {
                     if (reg.ToLower().Contains("qcdxdriver"))
+                    {
                         DXReg += File.ReadAllText(reg);
+                    }
                 }
             }
 
-            foreach (var dir in dirs)
+            foreach (string? dir in dirs)
             {
                 bool dxrel = false;
-                foreach (var itm in directx)
+                foreach (string? itm in directx)
+                {
                     if (dir.ToLower().Contains(itm.ToLower()))
                     {
                         dxrel = true;
                         break;
                     }
+                }
+
                 if (dxrel)
                 {
                     Console.WriteLine("(dxCare) Deleting " + dir + "...");
@@ -640,15 +642,18 @@ namespace GetLumiaBSP
                 }
             }
 
-            foreach (var reg in regs)
+            foreach (string? reg in regs)
             {
                 bool dxrel = false;
-                foreach (var itm in directx)
+                foreach (string? itm in directx)
+                {
                     if (reg.ToLower().Contains(itm.ToLower()))
                     {
                         dxrel = true;
                         break;
                     }
+                }
+
                 if (dxrel)
                 {
                     Console.WriteLine("(dxCare) Deleting " + reg + "...");
@@ -657,13 +662,17 @@ namespace GetLumiaBSP
             }
 
             if (DXReg != "" && dxfile != "" && vssfile != "")
+            {
                 DXInfHandler.GenInfProperly(DXReg, dxfile, vssfile);
+            }
         }
 
         public static void CopyDir(string sourceFolder, string destFolder)
         {
             if (!Directory.Exists(destFolder))
+            {
                 Directory.CreateDirectory(destFolder);
+            }
 
             // Get Files & Copy
             string[] files = Directory.GetFiles(sourceFolder);

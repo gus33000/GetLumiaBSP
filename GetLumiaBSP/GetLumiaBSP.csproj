@@ -1,0 +1,77 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="7za.exe" />
+    <None Remove="Care\DXCare\qca3xxcompiler8974.DLL" />
+    <None Remove="Care\DXCare\qcdx8974.inf" />
+    <None Remove="Care\DXCare\qcdx9um8974.dll" />
+    <None Remove="Care\DXCare\qcmcumd8974.dll" />
+    <None Remove="Care\DXCare\qcviddecmft8974.dll" />
+    <None Remove="Care\DXCare\qcvidencmfth2648974.dll" />
+    <None Remove="Care\DXCare\QcVidEncMftVC18974.dll" />
+    <None Remove="Care\DXCare\qcvidum8974.DLL" />
+    <None Remove="Care\MBBCare\qcmbb.inf" />
+    <None Remove="Care\UARTCare\qcuart.inf" />
+    <None Remove="Care\WLANCare\qcwlan8626.inf" />
+    <None Remove="Care\WLANCare\qcwlan8974.inf" />
+    <None Remove="SxSExpand.EXE" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="7za.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\DXCare\qca3xxcompiler8974.DLL">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\DXCare\qcdx8974.inf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\DXCare\qcdx9um8974.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\DXCare\qcmcumd8974.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\DXCare\qcviddecmft8974.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\DXCare\qcvidencmfth2648974.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\DXCare\QcVidEncMftVC18974.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\DXCare\qcvidum8974.DLL">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\MBBCare\qcmbb.inf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\UARTCare\qcuart.inf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\WLANCare\qcwlan8626.inf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Care\WLANCare\qcwlan8974.inf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SxSExpand.EXE">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.8.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.2" />
+  </ItemGroup>
+
+</Project>

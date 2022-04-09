@@ -18,16 +18,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace GetLumiaBSP
 {
-    class DXInfHandler
+    internal class DXInfHandler
     {
         public static void GenInfProperly(string QCDXKMReg, string QCDXKM, string QCVSS)
         {
@@ -36,13 +29,17 @@ namespace GetLumiaBSP
             string desc = "Qualcomm Adreno UNKNOWN";
             string ID = "QCOMHWID";
 
-            foreach (var line in QCDXKMReg.Split('\n'))
+            foreach (string? line in QCDXKMReg.Split('\n'))
             {
                 if (line.ToLower().Contains("\"=\"qualcomm adreno "))
+                {
                     desc = "Qualcomm Adreno " + line.Split(' ').Last().Replace("\"", "").Replace("\n", "").Replace("\r", "");
+                }
 
                 if (line.ToLower().Contains("[hkey_local_machine\\rtsystem\\driverdatabase\\deviceids\\acpi\\"))
+                {
                     ID = line.Split('\\').Last().Replace("]", "").Replace("\n", "").Replace("\r", "");
+                }
             }
 
             Console.WriteLine("(dxCare) Generating INF...");
@@ -68,7 +65,7 @@ namespace GetLumiaBSP
 
         public static string GetPrefilledInf(string DeviceDesc, string ACPIID, string QCDXKM, string QCVSS)
         {
-            var lines = File.ReadAllText(@"Care\DXCARE\qcdx8974.inf");
+            string? lines = File.ReadAllText(@"Care\DXCARE\qcdx8974.inf");
 
             lines = lines.Replace("!!HWID!!", ACPIID);
             lines = lines.Replace("!!DXKM!!", QCDXKM);

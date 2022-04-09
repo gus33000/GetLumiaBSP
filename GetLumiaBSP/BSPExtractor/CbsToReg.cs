@@ -18,10 +18,6 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -29,31 +25,39 @@ namespace BSPExtractor
 {
     public class CbsToReg
     {
-        List<RegistryCollection> _registries;
-        string _comment;
+        private readonly List<RegistryCollection> _registries;
+        private string _comment;
         public string Comment { get => _comment; set => _comment = value; }
 
-        public CbsToReg() => _registries = new List<RegistryCollection>();
+        public CbsToReg()
+        {
+            _registries = new List<RegistryCollection>();
+        }
 
-        public void Add(RegistryCollection reg) => _registries.Add(reg);
+        public void Add(RegistryCollection reg)
+        {
+            _registries.Add(reg);
+        }
 
-        string KeyNameReplace(string s, string software, string system) =>
-            s.Replace("HKEY_LOCAL_MACHINE\\SOFTWARE", "HKEY_LOCAL_MACHINE\\" + software.ToUpper())
-             .Replace("HKEY_LOCAL_MACHINE\\SYSTEM", "HKEY_LOCAL_MACHINE\\" + system.ToUpper());
+        private string KeyNameReplace(string s, string software, string system)
+        {
+            return s.Replace("HKEY_LOCAL_MACHINE\\SOFTWARE", "HKEY_LOCAL_MACHINE\\" + software.ToUpper())
+.Replace("HKEY_LOCAL_MACHINE\\SYSTEM", "HKEY_LOCAL_MACHINE\\" + system.ToUpper());
+        }
 
         public string Build(string softwareName, string systemName)
         {
-            StringBuilder str = new StringBuilder();
+            StringBuilder str = new();
             str.Append("Windows Registry Editor Version 5.00\r\n");
             str.Append(Comment + "\r\n\r\n");
 
-            foreach (var registry in _registries)
+            foreach (RegistryCollection registry in _registries)
             {
                 str.Append("[" + KeyNameReplace(registry.KeyName.ToUpper(), softwareName, systemName) + "]" + "\r\n");
 
-                foreach (var registryValue in registry.RegistryValues)
+                foreach (RegistryValue registryValue in registry.RegistryValues)
                 {
-                    var keyName = (registryValue.Name == "") ? "@" : "\"" + registryValue.Name + "\"";
+                    string? keyName = (registryValue.Name == "") ? "@" : "\"" + registryValue.Name + "\"";
 
                     str.Append(keyName.Replace("\\", @"\\") + "=" + ConvertValueToString(registryValue.Value, registryValue.ValueType) + "\r\n");
                 }
@@ -62,37 +66,60 @@ namespace BSPExtractor
             return str.ToString();
         }
 
-        void FinalizeSlice(string output, string reg, string type) => File.WriteAllText(output + type + ".reg", reg, Encoding.Unicode);
+        private void FinalizeSlice(string output, string reg, string type)
+        {
+            File.WriteAllText(output + type + ".reg", reg, Encoding.Unicode);
+        }
 
-        string ConvertValueToString(string value, string valueType)
+        private string ConvertValueToString(string value, string valueType)
         {
             if (value == null)
+            {
                 value = "";
+            }
 
             if (valueType == "REG_DWORD")
+            {
                 return "dword:" + value.Replace("0x", "");
+            }
+
             if (valueType == "REG_QWORD")
+            {
                 return "hex(b):" + string.Join(",", SplitInParts(value, 2));
+            }
             else if (valueType == "REG_SZ")
+            {
                 return "\"" + value.Replace(@"\", @"\\") + "\"";
+            }
             else if (valueType == "REG_EXPAND_SZ")
+            {
                 return "hex(2):" + string.Join(",", SplitInParts(ToHex(value.Replace("\"", "") + "\0"), 2));
+            }
             else if (valueType == "REG_BINARY")
+            {
                 return "hex:" + string.Join(",", SplitInParts(value, 2));
+            }
             else if (valueType == "REG_NONE")
+            {
                 return "hex(0):";
+            }
             else if (valueType == "REG_MULTI_SZ")
             {
-                var finalString = "";
+                string? finalString = "";
 
                 foreach (Match match in rg_splitComma.Matches(value))
                 {
-                    var tmp = match.Value.TrimStart(',');
+                    string? tmp = match.Value.TrimStart(',');
 
                     if (tmp.StartsWith("\""))
-                        tmp = tmp.Substring(1);
+                    {
+                        tmp = tmp[1..];
+                    }
+
                     if (tmp.EndsWith("\""))
+                    {
                         tmp = tmp.Remove(tmp.Length - 1);
+                    }
 
                     finalString += (tmp + "\0");
                 }
@@ -101,29 +128,36 @@ namespace BSPExtractor
                 return "hex(7):" + string.Join(",", SplitInParts(ToHex(finalString), 2)); //fix for the quots
             }
             else if (OnlyHexInString(valueType))
+            {
                 return $"hex({valueType}):" + string.Join(",", SplitInParts(value, 2)); //??
+            }
 
             return "$([INVALID_DATA])!!"; //??
         }
 
-        Regex rg_checkHex = new Regex(@"\A\b[0-9a-fA-F]+\b\Z", RegexOptions.Compiled);
-        Regex rg_splitComma = new Regex("(?:^|,)(\"(?:[^\"]+|\"\")*\"|[^,]*)", RegexOptions.Compiled);
-        public bool OnlyHexInString(string test) => rg_checkHex.IsMatch(test);
-
-        public static IEnumerable<String> SplitInParts(string s, int partLength)
+        private readonly Regex rg_checkHex = new(@"\A\b[0-9a-fA-F]+\b\Z", RegexOptions.Compiled);
+        private readonly Regex rg_splitComma = new("(?:^|,)(\"(?:[^\"]+|\"\")*\"|[^,]*)", RegexOptions.Compiled);
+        public bool OnlyHexInString(string test)
         {
-            for (var i = 0; i < s.Length; i += partLength)
+            return rg_checkHex.IsMatch(test);
+        }
+
+        public static IEnumerable<string> SplitInParts(string s, int partLength)
+        {
+            for (int i = 0; i < s.Length; i += partLength)
+            {
                 yield return s.Substring(i, Math.Min(partLength, s.Length - i));
+            }
         }
 
         public static string ToHex(string s)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             foreach (char c in s)
             {
-                var splittedParts = SplitInParts(string.Format("{0:X4}", (int)c), 2).ToList();
+                List<string>? splittedParts = SplitInParts(string.Format("{0:X4}", (int)c), 2).ToList();
                 splittedParts.Reverse();
-                sb.AppendFormat(String.Join("", splittedParts));
+                sb.AppendFormat(string.Join("", splittedParts));
             }
             return sb.ToString();
         }
