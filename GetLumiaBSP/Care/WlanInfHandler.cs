@@ -34,9 +34,13 @@ namespace GetLumiaBSP
             {
                 File.Copy(@"Care\WLANCare\qcwlan8974.inf", @"Wlan\qcwlan8974.inf");
             }
-            else
+            else if (QCWLANSYS.Contains("8626"))
             {
-                File.Copy(@"Care\WLANCare\qcwlan8626.inf", @"Wlan\qcwlan8974.inf");
+                File.Copy(@"Care\WLANCare\qcwlan8626.inf", @"Wlan\qcwlan8626.inf");
+            }
+            else if (QCWLANSYS.Contains("8612"))
+            {
+                File.Copy(@"Care\WLANCare\qcwlan8612.inf", @"Wlan\qcwlan8612.inf");
             }
 
             Console.WriteLine("(wlanCare) Done.");
