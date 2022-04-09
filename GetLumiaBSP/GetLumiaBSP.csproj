@@ -5,6 +5,7 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +22,7 @@
     <None Remove="Care\UARTCare\qcuart.inf" />
     <None Remove="Care\WLANCare\qcwlan8626.inf" />
     <None Remove="Care\WLANCare\qcwlan8974.inf" />
+    <None Remove="manifest.bin" />
     <None Remove="SxSExpand.EXE" />
   </ItemGroup>
 
@@ -62,6 +64,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Care\WLANCare\qcwlan8974.inf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="manifest.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="SxSExpand.EXE">

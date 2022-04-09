@@ -22,75 +22,9 @@ using System.Xml.Serialization;
 
 namespace BSPExtractor
 {
-    public static class XmlDsmDiff
-    {
-        [XmlRoot(ElementName = "SourceVersion", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-        public class SourceVersion
-        {
-            [XmlAttribute(AttributeName = "Major")]
-            public string Major { get; set; }
-            [XmlAttribute(AttributeName = "Minor")]
-            public string Minor { get; set; }
-            [XmlAttribute(AttributeName = "QFE")]
-            public string QFE { get; set; }
-            [XmlAttribute(AttributeName = "Build")]
-            public string Build { get; set; }
-        }
-
-        [XmlRoot(ElementName = "TargetVersion", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-        public class TargetVersion
-        {
-            [XmlAttribute(AttributeName = "Major")]
-            public string Major { get; set; }
-            [XmlAttribute(AttributeName = "Minor")]
-            public string Minor { get; set; }
-            [XmlAttribute(AttributeName = "QFE")]
-            public string QFE { get; set; }
-            [XmlAttribute(AttributeName = "Build")]
-            public string Build { get; set; }
-        }
-
-        [XmlRoot(ElementName = "DiffFileEntry", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-        public class DiffFileEntry
-        {
-            [XmlElement(ElementName = "FileType", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public string FileType { get; set; }
-            [XmlElement(ElementName = "DevicePath", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public string DevicePath { get; set; }
-            [XmlElement(ElementName = "CabPath", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public string CabPath { get; set; }
-            [XmlElement(ElementName = "DiffType", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public string DiffType { get; set; }
-        }
-
-        [XmlRoot(ElementName = "Files", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-        public class Files
-        {
-            [XmlElement(ElementName = "DiffFileEntry", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public List<DiffFileEntry> DiffFileEntry { get; set; }
-        }
-
-        [XmlRoot(ElementName = "DiffPackage", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-        public class DiffPackage
-        {
-            [XmlElement(ElementName = "SourceVersion", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public SourceVersion SourceVersion { get; set; }
-            [XmlElement(ElementName = "TargetVersion", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public TargetVersion TargetVersion { get; set; }
-            [XmlElement(ElementName = "SourceHash", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public string SourceHash { get; set; }
-            [XmlElement(ElementName = "Name", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public string Name { get; set; }
-            [XmlElement(ElementName = "Files", Namespace = "http://schemas.microsoft.com/embedded/2004/10/ImageUpdate")]
-            public Files Files { get; set; }
-            [XmlAttribute(AttributeName = "xmlns")]
-            public string Xmlns { get; set; }
-        }
-    }
-
     public static class XmlMum
     {
-        [XmlRoot(ElementName = "assemblyIdentity")]
+        [XmlRoot(ElementName = "assemblyIdentity", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class AssemblyIdentity
         {
             [XmlAttribute(AttributeName = "name")]
@@ -109,7 +43,7 @@ namespace BSPExtractor
             public string VersionScope { get; set; }
         }
 
-        [XmlRoot(ElementName = "phoneInformation")]
+        [XmlRoot(ElementName = "phoneInformation", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class PhoneInformation
         {
             [XmlAttribute(AttributeName = "phoneRelease")]
@@ -126,7 +60,7 @@ namespace BSPExtractor
             public string PhoneGroupingKey { get; set; }
         }
 
-        [XmlRoot(ElementName = "file")]
+        [XmlRoot(ElementName = "file", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class File
         {
             [XmlAttribute(AttributeName = "name")]
@@ -145,37 +79,37 @@ namespace BSPExtractor
             public string Cabpath { get; set; }
         }
 
-        [XmlRoot(ElementName = "customInformation")]
+        [XmlRoot(ElementName = "customInformation", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class CustomInformation
         {
-            [XmlElement(ElementName = "phoneInformation")]
+            [XmlElement(ElementName = "phoneInformation", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public PhoneInformation PhoneInformation { get; set; }
-            [XmlElement(ElementName = "file")]
+            [XmlElement(ElementName = "file", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public List<File> File { get; set; }
         }
 
-        [XmlRoot(ElementName = "component")]
+        [XmlRoot(ElementName = "component", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class Component
         {
-            [XmlElement(ElementName = "assemblyIdentity")]
+            [XmlElement(ElementName = "assemblyIdentity", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public AssemblyIdentity AssemblyIdentity { get; set; }
         }
 
-        [XmlRoot(ElementName = "update")]
+        [XmlRoot(ElementName = "update", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class Update
         {
-            [XmlElement(ElementName = "component")]
+            [XmlElement(ElementName = "component", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public Component Component { get; set; }
             [XmlAttribute(AttributeName = "name")]
             public string Name { get; set; }
         }
 
-        [XmlRoot(ElementName = "package")]
+        [XmlRoot(ElementName = "package", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class Package
         {
-            [XmlElement(ElementName = "customInformation")]
+            [XmlElement(ElementName = "customInformation", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public CustomInformation CustomInformation { get; set; }
-            [XmlElement(ElementName = "update")]
+            [XmlElement(ElementName = "update", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public Update Update { get; set; }
             [XmlAttribute(AttributeName = "identifier")]
             public string Identifier { get; set; }
@@ -189,17 +123,17 @@ namespace BSPExtractor
             public string BinaryPartition { get; set; }
         }
 
-        [XmlRoot(ElementName = "assembly")]
+        [XmlRoot(ElementName = "assembly", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class Assembly
         {
-            [XmlElement(ElementName = "assemblyIdentity")]
+            [XmlElement(ElementName = "assemblyIdentity", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public AssemblyIdentity AssemblyIdentity { get; set; }
 
-            [XmlArray(ElementName = "registryKeys")]
+            [XmlArray(ElementName = "registryKeys", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             [XmlArrayItem(ElementName = "registryKey")]
             public List<RegistryKey> RegistryKeys { get; set; }
 
-            [XmlElement(ElementName = "package")]
+            [XmlElement(ElementName = "package", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public Package Package { get; set; }
             [XmlAttribute(AttributeName = "xmlns")]
             public string Xmlns { get; set; }
@@ -215,26 +149,26 @@ namespace BSPExtractor
             //TODO: trustInfo
         }
 
-        [XmlRoot(ElementName = "registryKey")]
+        [XmlRoot(ElementName = "registryKey", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class RegistryKey
         {
 
-            [XmlElement(ElementName = "registryValue")]
+            [XmlElement(ElementName = "registryValue", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public List<RegistryValue> RegistryValues { get; set; }
-            [XmlAttribute(AttributeName = "keyName")]
+            [XmlAttribute(AttributeName = "keyName", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public string KeyName { get; set; }
-            [XmlElement(ElementName = "securityDescriptor")]
+            [XmlElement(ElementName = "securityDescriptor", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public SecurityDescriptor SecurityDescriptor { get; set; }
         }
 
-        [XmlRoot(ElementName = "securityDescriptor")]
+        [XmlRoot(ElementName = "securityDescriptor", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class SecurityDescriptor
         {
-            [XmlAttribute(AttributeName = "name")]
+            [XmlAttribute(AttributeName = "name", Namespace = "urn:schemas-microsoft-com:asm.v3")]
             public string Name { get; set; }
         }
 
-        [XmlRoot(ElementName = "registryValue")]
+        [XmlRoot(ElementName = "registryValue", Namespace = "urn:schemas-microsoft-com:asm.v3")]
         public class RegistryValue
         {
             [XmlAttribute(AttributeName = "name")]

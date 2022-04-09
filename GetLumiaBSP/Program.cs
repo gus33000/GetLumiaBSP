@@ -49,6 +49,8 @@ namespace GetLumiaBSP
 
         private static int Main(string[] args)
         {
+            LibSxS.Delta.DeltaAPI.wcpBasePath = Path.Combine(Directory.GetCurrentDirectory(), "manifest.bin");
+
             return Parser.Default.ParseArguments<SecWim2WimOptions, ENOSWDownloadOptions, InfOptions, UnBSPOptions, RegExtractionMainOSOptions, RegExtractionWimOptions>(args).MapResult(
               (SecWim2WimOptions arg) =>
               {
