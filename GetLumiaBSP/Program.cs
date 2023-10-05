@@ -403,7 +403,7 @@ namespace GetLumiaBSP
                     {
                         foreach (string? itm in wlan8974)
                         {
-                            WlanFile = itm.Split('\\').Last();
+                            WlanFile = itm;
                         }
                     }
 
@@ -411,7 +411,7 @@ namespace GetLumiaBSP
                     {
                         foreach (string? itm in wlan8626)
                         {
-                            WlanFile = itm.Split('\\').Last();
+                            WlanFile = itm;
                         }
                     }
 
@@ -419,7 +419,7 @@ namespace GetLumiaBSP
                     {
                         foreach (string? itm in wlandat)
                         {
-                            WlanDatFile = itm.Split('\\').Last();
+                            WlanDatFile = itm;
                         }
                     }
                 }
@@ -444,6 +444,8 @@ namespace GetLumiaBSP
                     Directory.Delete(dir, true);
                 }
             }
+            WlanFile = WlanFile.Split('\\').Last();
+            WlanDatFile = WlanDatFile.Split('\\').Last();
 
             if (!string.IsNullOrEmpty(WlanFile) && !string.IsNullOrEmpty(WlanDatFile))
             {
