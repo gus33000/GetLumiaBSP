@@ -450,17 +450,17 @@ namespace BSPExtractor
                 {
                     string path = NewDrive + @"\Windows\Packages\DsmFiles\" + packagename;
 
-                    RunProgram("7za.exe", "x " + path);
+                    RunProgram("7za.exe", "e " + path + " -o" + packagename);
 
-                    Stream stream = File.OpenRead(packagename.Replace(".xml", ""));
-                    //Stream stream = File.OpenRead(path);//
+                    string pathreal = Directory.EnumerateFiles(packagename, "*.dsm", SearchOption.TopDirectoryOnly).ElementAt(0);
+                    Stream stream = File.OpenRead(pathreal);
 
                     XmlSerializer serializer = new(typeof(XmlDsm.Package));
                     XmlDsm.Package package = (XmlDsm.Package)serializer.Deserialize(stream);
 
                     stream.Close();
 
-                    File.Delete(packagename.Replace(".xml", ""));
+                    Directory.Delete(packagename, true);
 
                     List<XmlDsm.FileEntry>? entries = package.Files.FileEntry;
 
